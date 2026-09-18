@@ -1,6 +1,6 @@
 import { useState } from "react";
 import EventCard from "../components/EventCard";
-import events from "../data/events";
+import events from "../data/Events";
 
 function Landing() {
   const [searchTerm, setSearchTerm] = useState("");

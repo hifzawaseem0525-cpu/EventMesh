@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import events from "../data/events";
-
+import events from "../data/Events";
+import EventCard from "../components/EventCard";
 function safeParse(key) {
   try {
     const raw = localStorage.getItem(key);
@@ -199,58 +199,8 @@ function StudentDashboard() {
 
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
 
-              {filteredEvents.map((event) => (
-
-                <article
-                  key={event.id}
-                  className="overflow-hidden rounded-2xl border border-white/10 bg-white shadow-xl transition hover:-translate-y-1 hover:shadow-2xl"
-                >
-
-                  <img
-                    src={event.image || "/placeholder-event.jpg"}
-                    alt={event.title}
-                    className="h-52 w-full object-cover"
-                  />
-
-                  <div className="p-6">
-
-                    <span className="rounded-full bg-purple-100 px-3 py-1 text-xs font-semibold text-purple-700">
-                      {event.category}
-                    </span>
-
-                    <h3 className="mt-4 text-xl font-bold text-slate-900">
-                      {event.title}
-                    </h3>
-
-                    <div className="mt-4 space-y-2 text-sm text-slate-600">
-
-                      <p>
-                        📅 {event.displayDate}
-                      </p>
-
-                      <p>
-                        📍 {event.location}
-                      </p>
-
-                    </div>
-
-                    <p className="mt-5 text-lg font-extrabold text-purple-600">
-                      {event.price > 0
-                        ? `From ₹${event.price}`
-                        : "Free"}
-                    </p>
-
-                    <Link
-                      to={`/event/${event.id}`}
-                      className="mt-5 block w-full rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-4 py-3 text-center font-semibold text-white transition hover:from-purple-700 hover:to-indigo-700"
-                    >
-                      View Event →
-                    </Link>
-
-                  </div>
-
-                </article>
-
+             {filteredEvents.map((event) => (
+             <EventCard key={event.id} event={event} />
               ))}
 
             </div>
