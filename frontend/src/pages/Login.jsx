@@ -1,15 +1,15 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { loginUser } from "../services/api";
 
 function Login() {
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("student");
   const [error, setError] = useState("");
 
-  const handleLogin = (event) => {
+  const handleLogin = async (event) => {
     event.preventDefault();
     setError("");
 
@@ -18,10 +18,24 @@ function Login() {
       return;
     }
 
-    if (role === "student") {
-      navigate("/student-dashboard");
-    } else {
-      navigate("/dashboard");
+    try {
+      const data = await loginUser(email, password);
+
+      localStorage.setItem("access_token", data.access_token);
+      localStorage.setItem("user_id", data.user_id);
+      localStorage.setItem("name", data.name);
+      localStorage.setItem("email", data.email);
+      localStorage.setItem("role", data.role);
+
+      if (data.role === "student") {
+        navigate("/student-dashboard");
+      } else if (data.role === "organizer") {
+        navigate("/dashboard");
+      } else {
+        setError("Unknown user role.");
+      }
+    } catch (error) {
+      setError(error.message);
     }
   };
 
@@ -76,53 +90,6 @@ function Login() {
               className="w-full rounded-xl border border-white/10 bg-white/10 px-4 py-3 text-white placeholder-slate-500 outline-none focus:border-purple-400 focus:ring-2 focus:ring-purple-400/30"
             />
           </div>
-
-          {/* Role Selection */}
-          <fieldset>
-            <legend className="mb-2 block text-sm font-semibold text-slate-300">
-              Login as
-            </legend>
-
-            <div className="grid grid-cols-2 gap-3">
-
-              <label
-                className={`cursor-pointer rounded-xl border px-4 py-3 text-center text-sm font-semibold transition ${
-                  role === "student"
-                    ? "border-purple-400 bg-purple-500/20 text-purple-300"
-                    : "border-white/10 bg-white/5 text-slate-400 hover:bg-white/10"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="role"
-                  value="student"
-                  checked={role === "student"}
-                  onChange={(e) => setRole(e.target.value)}
-                  className="sr-only"
-                />
-                Student
-              </label>
-
-              <label
-                className={`cursor-pointer rounded-xl border px-4 py-3 text-center text-sm font-semibold transition ${
-                  role === "organizer"
-                    ? "border-purple-400 bg-purple-500/20 text-purple-300"
-                    : "border-white/10 bg-white/5 text-slate-400 hover:bg-white/10"
-                }`}
-              >
-                <input
-                  type="radio"
-                  name="role"
-                  value="organizer"
-                  checked={role === "organizer"}
-                  onChange={(e) => setRole(e.target.value)}
-                  className="sr-only"
-                />
-                Organizer
-              </label>
-
-            </div>
-          </fieldset>
 
           {error && (
             <p

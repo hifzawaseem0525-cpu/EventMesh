@@ -1,4 +1,5 @@
-from datetime import datetime
+
+from datetime import datetime, timezone
 
 from sqlalchemy import (
     Column,
@@ -71,7 +72,7 @@ class Booking(Base):
     created_at = Column(
         DateTime,
         nullable=False,
-        default=datetime.utcnow,
+        default=lambda: datetime.now(timezone.utc).replace(tzinfo=None),
     )
 
     user = relationship("User")

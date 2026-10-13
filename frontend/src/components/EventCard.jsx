@@ -1,4 +1,19 @@
+
 import { Link } from "react-router-dom";
+
+function formatDisplayDate(isoDate) {
+  if (!isoDate) return "";
+
+  const date = new Date(isoDate);
+
+  if (isNaN(date)) return isoDate;
+
+  return date.toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
 
 function EventCard({ event }) {
   return (
@@ -26,7 +41,7 @@ function EventCard({ event }) {
         <div className="mt-4 space-y-2 text-sm text-slate-600">
           <p>
             <span aria-hidden="true">📅</span>{" "}
-            {event.displayDate}
+            {formatDisplayDate(event.date)}
           </p>
 
           <p>
@@ -38,7 +53,9 @@ function EventCard({ event }) {
         {/* Price */}
         <div className="mt-5 flex items-center justify-between">
           <p className="text-lg font-extrabold text-purple-600">
-            {event.price > 0 ? `From ₹${event.price}` : "Free"}
+            {Number(event.price) > 0
+              ? `From ₹${event.price}`
+              : "Free"}
           </p>
 
           <span className="text-xs font-medium text-slate-400">

@@ -1,4 +1,4 @@
-# app/schemas/booking.py
+
 from datetime import datetime
 from decimal import Decimal
 from typing import Literal
@@ -14,6 +14,20 @@ class BookingCreate(BaseModel):
     quantity: int = Field(gt=0, le=10)
 
 
+class BookingEventResponse(BaseModel):
+    id: int
+    title: str
+    description: str | None = None
+    category: str | None = None
+    location: str | None = None
+    date: datetime
+    price: Decimal
+    image: str | None = None
+
+    class Config:
+        from_attributes = True
+
+
 class BookingResponse(BaseModel):
     id: int
     user_id: int
@@ -24,6 +38,7 @@ class BookingResponse(BaseModel):
     total_amount: Decimal
     status: BookingStatus
     created_at: datetime
+    event: BookingEventResponse
 
     class Config:
         from_attributes = True

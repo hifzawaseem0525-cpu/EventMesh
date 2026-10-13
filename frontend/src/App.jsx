@@ -1,3 +1,4 @@
+
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import Navbar from "./components/Navbar";
@@ -10,6 +11,8 @@ import EventDetail from "./pages/EventDetail";
 import Dashboard from "./pages/Dashboard";
 import CreateEvent from "./pages/CreateEvent";
 import EditEvent from "./pages/EditEvent";
+import ManageTickets from "./pages/Managetickets";
+import OrganizerScanner from "./pages/OrganizerScanner";
 
 function App() {
   return (
@@ -47,10 +50,16 @@ function App() {
           element={<EventDetail />}
         />
 
-        {/* Admin Dashboard */}
+        {/* Organizer Dashboard */}
         <Route
           path="/dashboard"
           element={<Dashboard />}
+        />
+
+        {/* Organizer QR Scanner */}
+        <Route
+          path="/organizer/scanner"
+          element={<OrganizerScanner />}
         />
 
         {/* Create Event */}
@@ -58,11 +67,18 @@ function App() {
           path="/create-event"
           element={<CreateEvent />}
         />
+
         {/* Edit Event */}
-       <Route
-        path="/edit-event/:id"
-        element={<EditEvent />}
-       />
+        <Route
+          path="/edit-event/:id"
+          element={<EditEvent />}
+        />
+
+        {/* Manage Ticket Tiers */}
+        <Route
+          path="/manage-tickets/:eventId"
+          element={<ManageTickets />}
+        />
       </Routes>
     </BrowserRouter>
   );

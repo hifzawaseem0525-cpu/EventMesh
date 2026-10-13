@@ -1,67 +1,61 @@
-import { useState, useMemo } from "react";
-import { Link } from "react-router-dom";
-import events from "../data/Events";
+import { useEffect, useMemo, useState } from "react";
 import EventCard from "../components/EventCard";
-function safeParse(key) {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
+
+const API_URL = "http://127.0.0.1:8000";
 
 function StudentDashboard() {
+  const [events, setEvents] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
 
-  // Combine original events + created events, then apply saved edits,
-  // then drop events whose date has already passed.
-  const allEvents = useMemo(() => {
-    const createdEvents = safeParse("eventmeshCreatedEvents");
-    const editedEvents = safeParse("eventmeshEditedEvents");
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const response = await fetch(`${API_URL}/events/`);
+        const data = await response.json();
 
-    const merged = [...events, ...createdEvents].map((event) => {
-      const editedEvent = editedEvents.find(
-        (edited) => String(edited.id) === String(event.id)
-      );
+        if (!response.ok) {
+          throw new Error(data.detail || "Failed to load events");
+        }
 
-      return editedEvent ? { ...event, ...editedEvent } : event;
-    });
+        setEvents(data);
+      } catch (error) {
+        setError(error.message);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    return merged.filter((event) => {
-      if (!event.date) return true;
-      const eventDate = new Date(event.date);
-      return isNaN(eventDate) || eventDate >= today;
-    });
+    fetchEvents();
   }, []);
 
-  const categories = [
-    "All",
-    ...new Set(allEvents.map((event) => event.category).filter(Boolean)),
-  ];
+  const categories = useMemo(() => {
+    return [
+      "All",
+      ...new Set(
+        events.map((event) => event.category).filter(Boolean)
+      ),
+    ];
+  }, [events]);
 
-  const filteredEvents = allEvents.filter((event) => {
-  // Students should only see published events
-  if (event.status && event.status !== "Published") {
-    return false;
-  }
+  const filteredEvents = useMemo(() => {
+    const search = searchTerm.toLowerCase();
 
-  const search = searchTerm.toLowerCase();
-    const matchesSearch =
-      (event.title || "").toLowerCase().includes(search) ||
-      (event.category || "").toLowerCase().includes(search) ||
-      (event.location || "").toLowerCase().includes(search);
+    return events.filter((event) => {
+      const matchesSearch =
+        (event.title || "").toLowerCase().includes(search) ||
+        (event.category || "").toLowerCase().includes(search) ||
+        (event.location || "").toLowerCase().includes(search);
 
-    const matchesCategory =
-      selectedCategory === "All" ||
-      event.category === selectedCategory;
+      const matchesCategory =
+        selectedCategory === "All" ||
+        event.category === selectedCategory;
 
-    return matchesSearch && matchesCategory;
-  });
+      return matchesSearch && matchesCategory;
+    });
+  }, [events, searchTerm, selectedCategory]);
 
   return (
     <main className="min-h-screen bg-slate-950 px-6 py-10 text-white">
@@ -91,7 +85,7 @@ function StudentDashboard() {
             </p>
 
             <p className="mt-2 text-3xl font-bold">
-              {allEvents.length}
+              {events.length}
             </p>
           </div>
 
@@ -119,7 +113,6 @@ function StudentDashboard() {
 
         {/* Search */}
         <section className="mb-6">
-
           <label
             htmlFor="event-search"
             className="mb-2 block text-sm font-semibold text-slate-300"
@@ -135,16 +128,13 @@ function StudentDashboard() {
             placeholder="Search by event, category, or location..."
             className="w-full rounded-xl border border-white/10 bg-white/10 px-4 py-3 text-white placeholder-slate-500 outline-none transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/30"
           />
-
         </section>
 
         {/* Categories */}
         <section className="mb-8">
-
           <div className="flex flex-wrap gap-2">
 
             {categories.map((category) => (
-
               <button
                 key={category}
                 type="button"
@@ -158,11 +148,9 @@ function StudentDashboard() {
               >
                 {category}
               </button>
-
             ))}
 
           </div>
-
         </section>
 
         {/* Events */}
@@ -174,15 +162,39 @@ function StudentDashboard() {
               Available Events
             </h2>
 
-            <p className="text-sm text-slate-400">
-              {filteredEvents.length} event
-              {filteredEvents.length !== 1 ? "s" : ""}
-            </p>
+            {!loading && !error && (
+              <p className="text-sm text-slate-400">
+                {filteredEvents.length} event
+                {filteredEvents.length !== 1 ? "s" : ""}
+              </p>
+            )}
 
           </div>
 
-          {filteredEvents.length === 0 ? (
+          {/* Loading */}
+          {loading && (
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-10 text-center">
+              <p className="text-slate-400">
+                Loading events...
+              </p>
+            </div>
+          )}
 
+          {/* Error */}
+          {!loading && error && (
+            <div className="rounded-2xl border border-red-400/20 bg-red-400/10 p-10 text-center">
+              <h3 className="text-xl font-bold text-red-300">
+                Unable to load events
+              </h3>
+
+              <p className="mt-2 text-red-200/70">
+                {error}
+              </p>
+            </div>
+          )}
+
+          {/* No events */}
+          {!loading && !error && filteredEvents.length === 0 && (
             <div className="rounded-2xl border border-white/10 bg-white/5 p-10 text-center">
 
               <h3 className="text-xl font-bold">
@@ -194,17 +206,20 @@ function StudentDashboard() {
               </p>
 
             </div>
+          )}
 
-          ) : (
-
+          {/* Events */}
+          {!loading && !error && filteredEvents.length > 0 && (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
 
-             {filteredEvents.map((event) => (
-             <EventCard key={event.id} event={event} />
+              {filteredEvents.map((event) => (
+                <EventCard
+                  key={event.id}
+                  event={event}
+                />
               ))}
 
             </div>
-
           )}
 
         </section>

@@ -1,6 +1,5 @@
-# app/routes/tickets.py
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy.orm import Session
@@ -171,7 +170,9 @@ def check_in_ticket(
         )
 
     ticket.status = "used"
-    ticket.checked_in_at = datetime.utcnow()
+
+    # Store the UTC timestamp as a naive datetime for MySQL DATETIME.
+    ticket.checked_in_at = datetime.now(timezone.utc).replace(tzinfo=None)
 
     db.commit()
     db.refresh(ticket)

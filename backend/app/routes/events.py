@@ -14,7 +14,7 @@ router = APIRouter(
 
 
 # -------------------------
-# Public: Get all events
+# Public: Get all published events
 # -------------------------
 @router.get("/", response_model=list[EventResponse])
 def get_events(
@@ -28,7 +28,30 @@ def get_events(
 
 
 # -------------------------
-# Public: Get one event
+# Organizer: Get own events
+# -------------------------
+@router.get(
+    "/my-events",
+    response_model=list[EventResponse],
+)
+def get_my_events(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_organizer),
+):
+    query = db.query(Event)
+
+    # Organizers see their own events.
+    # Admins can see all events.
+    if current_user.role != "admin":
+        query = query.filter(
+            Event.organizer_id == current_user.id
+        )
+
+    return query.order_by(Event.id.desc()).all()
+
+
+# -------------------------
+# Public: Get one published event
 # -------------------------
 @router.get("/{event_id}", response_model=EventResponse)
 def get_event(
@@ -48,6 +71,38 @@ def get_event(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Event not found",
+        )
+
+    return event
+
+
+# -------------------------
+# Helper: Get owned event
+# -------------------------
+def _get_owned_event(
+    event_id: int,
+    db: Session,
+    current_user: User,
+):
+    event = (
+        db.query(Event)
+        .filter(Event.id == event_id)
+        .first()
+    )
+
+    if not event:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Event not found",
+        )
+
+    if (
+        event.organizer_id != current_user.id
+        and current_user.role != "admin"
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to manage this event",
         )
 
     return event
@@ -83,40 +138,6 @@ def create_event(
     db.refresh(new_event)
 
     return new_event
-
-
-# -------------------------
-# Helper: Get owned event
-# -------------------------
-def _get_owned_event(
-    event_id: int,
-    db: Session,
-    current_user: User,
-):
-    event = (
-        db.query(Event)
-        .filter(Event.id == event_id)
-        .first()
-    )
-
-    if not event:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Event not found",
-        )
-
-    # Organizers can manage only their own events.
-    # Admins can manage any event.
-    if (
-        event.organizer_id != current_user.id
-        and current_user.role != "admin"
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You do not have permission to manage this event",
-        )
-
-    return event
 
 
 # -------------------------

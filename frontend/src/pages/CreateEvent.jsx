@@ -1,30 +1,52 @@
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+
+const API_URL = "http://127.0.0.1:8000";
+
+const INITIAL_FORM = {
+  title: "",
+  category: "",
+  date: "",
+  location: "",
+  price: "",
+  image: "",
+  description: "",
+};
+
+const categories = [
+  "Technology",
+  "Music",
+  "Sports",
+  "Workshop",
+  "Cultural",
+  "Business",
+  "Other",
+];
+
+function getErrorMessage(data, fallback) {
+  if (typeof data?.detail === "string") {
+    return data.detail;
+  }
+
+  if (Array.isArray(data?.detail)) {
+    return data.detail
+      .map((item) => item.msg)
+      .filter(Boolean)
+      .join(", ");
+  }
+
+  return fallback;
+}
 
 function CreateEvent() {
   const navigate = useNavigate();
 
-  const [formData, setFormData] = useState({
-    title: "",
-    category: "",
-    date: "",
-    location: "",
-    price: "",
-    image: "",
-    description: "",
-  });
-
+  const [formData, setFormData] = useState(INITIAL_FORM);
   const [created, setCreated] = useState(false);
-
-  const categories = [
-    "Technology",
-    "Music",
-    "Sports",
-    "Workshop",
-    "Cultural",
-    "Business",
-    "Other",
-  ];
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const [createdEvent, setCreatedEvent] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -33,38 +55,91 @@ function CreateEvent() {
       ...current,
       [name]: value,
     }));
+
+    if (error) setError("");
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const existingCreatedEvents =
-      JSON.parse(localStorage.getItem("eventmeshCreatedEvents")) || [];
+    setError("");
 
-    const newEvent = {
-      id: Date.now(),
-      title: formData.title,
+    const token = localStorage.getItem("access_token");
+
+    if (!token) {
+      setError(
+        "Your login session was not found. Please log in again as an organizer."
+      );
+      return;
+    }
+
+    if (!formData.date) {
+      setError("Please select an event date.");
+      return;
+    }
+
+    // The backend expects a datetime, while the form provides a date.
+    // Use 10 AM to avoid timezone date shifts.
+    const eventDate = `${formData.date}T10:00:00`;
+
+    const payload = {
+      title: formData.title.trim(),
+      description: formData.description.trim(),
       category: formData.category,
-      displayDate: new Date(formData.date).toLocaleDateString("en-IN", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-      }),
-      date: formData.date,
-      location: formData.location,
-      price: Number(formData.price) || 0,
-      image: formData.image,
-      description: formData.description,
-      status: "Draft",
-      bookings: 0,
+      location: formData.location.trim(),
+      date: eventDate,
+      price: Number(formData.price),
+      image: formData.image.trim() || null,
+      status: "draft",
     };
 
-    localStorage.setItem(
-      "eventmeshCreatedEvents",
-      JSON.stringify([...existingCreatedEvents, newEvent])
-    );
+    setSubmitting(true);
 
-    setCreated(true);
+    try {
+      const response = await fetch(`${API_URL}/events/`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          throw new Error(
+            response.status === 401
+              ? "Your session has expired. Please log in again."
+              : "Only an authorized organizer can create events."
+          );
+        }
+
+        throw new Error(
+          getErrorMessage(data, "The event could not be created.")
+        );
+      }
+
+      // Only show success after the backend confirms the event was saved.
+      setCreatedEvent(data);
+      setCreated(true);
+    } catch (err) {
+      setError(
+        err.message ||
+          "Could not connect to the backend. Make sure FastAPI is running."
+      );
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const resetForm = () => {
+    setFormData(INITIAL_FORM);
+    setCreated(false);
+    setCreatedEvent(null);
+    setError("");
   };
 
   if (created) {
@@ -72,8 +147,7 @@ function CreateEvent() {
       <main className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 px-6 py-10 text-white">
         <div className="mx-auto flex min-h-[80vh] max-w-2xl items-center justify-center">
           <section className="w-full rounded-3xl border border-green-400/20 bg-white/[0.05] p-10 text-center shadow-2xl backdrop-blur-sm">
-
-            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-green-500/20 text-4xl">
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-green-500/20 text-4xl text-green-300">
               ✓
             </div>
 
@@ -86,38 +160,47 @@ function CreateEvent() {
             </h1>
 
             <p className="mt-3 text-slate-400">
-              Your event has been saved as a draft. You can manage its status
-              from the Organizer Dashboard.
+              Your event has been saved to the backend as a draft.
+              You can manage its status from the Organizer Dashboard.
             </p>
 
+            {createdEvent && (
+              <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] p-4 text-left">
+                <p className="text-xs uppercase tracking-wider text-slate-500">
+                  Event ID: {createdEvent.id}
+                </p>
+
+                <h2 className="mt-2 break-words text-lg font-bold">
+                  {createdEvent.title}
+                </h2>
+
+                <p className="mt-2 text-sm text-slate-400">
+                  {createdEvent.category} · {createdEvent.location}
+                </p>
+
+                <span className="mt-3 inline-flex rounded-full border border-amber-400/20 bg-amber-500/10 px-3 py-1 text-xs font-semibold capitalize text-amber-300">
+                  {createdEvent.status}
+                </span>
+              </div>
+            )}
+
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
-              <Link
-                to="/dashboard"
+              <button
+                type="button"
+                onClick={() => navigate("/dashboard")}
                 className="rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-3 font-semibold text-white transition hover:from-purple-500 hover:to-indigo-500"
               >
                 Go to Dashboard
-              </Link>
+              </button>
 
               <button
                 type="button"
-                onClick={() => {
-                  setCreated(false);
-                  setFormData({
-                    title: "",
-                    category: "",
-                    date: "",
-                    location: "",
-                    price: "",
-                    image: "",
-                    description: "",
-                  });
-                }}
+                onClick={resetForm}
                 className="rounded-xl bg-white/10 px-6 py-3 font-semibold text-white transition hover:bg-white/20"
               >
                 Create Another
               </button>
             </div>
-
           </section>
         </div>
       </main>
@@ -127,7 +210,6 @@ function CreateEvent() {
   return (
     <main className="min-h-screen bg-gradient-to-br from-slate-950 via-indigo-950 to-slate-950 px-6 py-10 text-white">
       <div className="mx-auto max-w-4xl">
-
         {/* Back */}
         <Link
           to="/dashboard"
@@ -151,12 +233,21 @@ function CreateEvent() {
           </p>
         </section>
 
+        {/* Backend error */}
+        {error && (
+          <div
+            role="alert"
+            className="mb-6 rounded-xl border border-red-400/20 bg-red-500/10 px-4 py-3 text-sm leading-6 text-red-200"
+          >
+            {error}
+          </div>
+        )}
+
         {/* Form */}
         <form
           onSubmit={handleSubmit}
           className="rounded-3xl border border-white/10 bg-white/[0.05] p-6 shadow-2xl backdrop-blur-sm md:p-8"
         >
-
           {/* Event Information */}
           <section>
             <div className="mb-6">
@@ -170,7 +261,6 @@ function CreateEvent() {
             </div>
 
             <div className="grid gap-6 md:grid-cols-2">
-
               {/* Event Title */}
               <div className="md:col-span-2">
                 <label
@@ -187,6 +277,7 @@ function CreateEvent() {
                   value={formData.title}
                   onChange={handleChange}
                   placeholder="Enter event title"
+                  maxLength={200}
                   required
                   className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-white placeholder-slate-600 outline-none transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/30"
                 />
@@ -255,6 +346,7 @@ function CreateEvent() {
                   value={formData.location}
                   onChange={handleChange}
                   placeholder="e.g. Seminar Hall"
+                  maxLength={255}
                   required
                   className="w-full rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-white placeholder-slate-600 outline-none transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/30"
                 />
@@ -274,6 +366,7 @@ function CreateEvent() {
                   name="price"
                   type="number"
                   min="0"
+                  step="0.01"
                   value={formData.price}
                   onChange={handleChange}
                   placeholder="0 for free event"
@@ -325,12 +418,11 @@ function CreateEvent() {
                   value={formData.description}
                   onChange={handleChange}
                   placeholder="Describe your event..."
-                  rows="6"
+                  rows={6}
                   required
                   className="w-full resize-none rounded-xl border border-white/10 bg-slate-900 px-4 py-3 text-white placeholder-slate-600 outline-none transition focus:border-purple-400 focus:ring-2 focus:ring-purple-400/30"
                 />
               </div>
-
             </div>
           </section>
 
@@ -344,7 +436,7 @@ function CreateEvent() {
             </h2>
 
             <div className="mt-4 grid gap-3 text-sm text-slate-400 sm:grid-cols-2">
-              <p>
+              <p className="break-words">
                 <span className="font-semibold text-slate-300">
                   Title:
                 </span>{" "}
@@ -365,7 +457,7 @@ function CreateEvent() {
                 {formData.date || "Not selected"}
               </p>
 
-              <p>
+              <p className="break-words">
                 <span className="font-semibold text-slate-300">
                   Location:
                 </span>{" "}
@@ -376,9 +468,9 @@ function CreateEvent() {
                 <span className="font-semibold text-slate-300">
                   Price:
                 </span>{" "}
-                {formData.price
+                {formData.price !== ""
                   ? `₹${formData.price}`
-                  : "Free / Not provided"}
+                  : "Not provided"}
               </p>
 
               <p>
@@ -392,7 +484,6 @@ function CreateEvent() {
 
           {/* Actions */}
           <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-
             <Link
               to="/dashboard"
               className="inline-flex items-center justify-center rounded-xl bg-white/10 px-6 py-3 font-semibold text-white transition hover:bg-white/20"
@@ -402,13 +493,12 @@ function CreateEvent() {
 
             <button
               type="submit"
-              className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-3 font-bold text-white shadow-lg shadow-purple-900/20 transition hover:-translate-y-0.5 hover:from-purple-500 hover:to-indigo-500 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 focus:ring-offset-slate-950"
+              disabled={submitting}
+              className="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 px-6 py-3 font-bold text-white shadow-lg shadow-purple-900/20 transition hover:-translate-y-0.5 hover:from-purple-500 hover:to-indigo-500 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 focus:ring-offset-slate-950 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Create Event
+              {submitting ? "Creating Event..." : "Create Event"}
             </button>
-
           </div>
-
         </form>
       </div>
     </main>
