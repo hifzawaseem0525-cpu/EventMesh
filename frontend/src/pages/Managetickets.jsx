@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 
@@ -55,10 +54,6 @@ export default function ManageTickets() {
   const loadData = useCallback(async () => {
     const token = localStorage.getItem("access_token");
 
-    setLoading(true);
-    setError("");
-    setNotice("");
-
     if (!token) {
       setError("Please log in again to manage ticket tiers.");
       setLoading(false);
@@ -111,6 +106,7 @@ export default function ManageTickets() {
 
       setEvent(selectedEvent);
       setTiers(tiersData);
+      setError("");
     } catch (err) {
       setError(err.message || "Unable to load ticket management.");
     } finally {
@@ -118,8 +114,13 @@ export default function ManageTickets() {
     }
   }, [eventId]);
 
+  // Schedule the initial load to avoid synchronous state updates in the effect.
   useEffect(() => {
-    loadData();
+    const timeoutId = window.setTimeout(() => {
+      loadData();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [loadData]);
 
   function handleChange(e) {
@@ -230,6 +231,7 @@ export default function ManageTickets() {
 
       resetForm();
       await loadData();
+
       setNotice(
         isEditing
           ? "Ticket tier updated successfully."

@@ -1,6 +1,7 @@
+
 from decimal import Decimal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class TicketTierCreate(BaseModel):
@@ -11,11 +12,10 @@ class TicketTierCreate(BaseModel):
 
 
 class TicketTierResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     event_id: int
     name: str
     price: Decimal
     available_quantity: int
-
-    class Config:
-        from_attributes = True

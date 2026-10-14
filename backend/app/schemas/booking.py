@@ -3,7 +3,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 BookingStatus = Literal["confirmed", "cancelled"]
@@ -15,6 +15,8 @@ class BookingCreate(BaseModel):
 
 
 class BookingEventResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     title: str
     description: str | None = None
@@ -24,11 +26,10 @@ class BookingEventResponse(BaseModel):
     price: Decimal
     image: str | None = None
 
-    class Config:
-        from_attributes = True
-
 
 class BookingResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     user_id: int
     event_id: int
@@ -39,6 +40,3 @@ class BookingResponse(BaseModel):
     status: BookingStatus
     created_at: datetime
     event: BookingEventResponse
-
-    class Config:
-        from_attributes = True

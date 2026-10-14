@@ -13,6 +13,7 @@ function OrganizerScanner() {
 
   const [scannerRunning, setScannerRunning] = useState(false);
   const [starting, setStarting] = useState(false);
+  const [processing, setProcessing] = useState(false);
   const [message, setMessage] = useState("");
   const [result, setResult] = useState(null);
   const [manualCode, setManualCode] = useState("");
@@ -23,6 +24,7 @@ function OrganizerScanner() {
     if (!ticketCode || processingRef.current) return;
 
     processingRef.current = true;
+    setProcessing(true);
     setMessage("");
     setResult(null);
 
@@ -83,6 +85,7 @@ function OrganizerScanner() {
       });
     } finally {
       processingRef.current = false;
+      setProcessing(false);
     }
   }
 
@@ -279,10 +282,10 @@ function OrganizerScanner() {
 
               <button
                 type="submit"
-                disabled={!manualCode.trim() || processingRef.current}
+                disabled={!manualCode.trim() || processing}
                 className="w-full rounded-lg bg-pink-400 px-5 py-3 font-semibold text-slate-950 hover:bg-pink-300 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Verify and Check In
+                {processing ? "Verifying ticket..." : "Verify and Check In"}
               </button>
             </form>
 

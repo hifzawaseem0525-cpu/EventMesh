@@ -1,4 +1,3 @@
-
 import { useCallback, useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
@@ -123,7 +122,7 @@ function TicketQRCode({ ticketId, token }) {
   );
 }
 
-function MyTickets() {
+export default function MyTickets() {
   const [tickets, setTickets] = useState([]);
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -144,9 +143,7 @@ function MyTickets() {
       return;
     }
 
-    if (showLoading) {
-      setLoading(true);
-    } else {
+    if (!showLoading) {
       setRefreshing(true);
     }
 
@@ -195,9 +192,13 @@ function MyTickets() {
     }
   }, []);
 
-  // Load tickets on page entry.
+  // Load tickets on page entry without updating state synchronously in the effect.
   useEffect(() => {
-    loadTickets(true);
+    const timeoutId = window.setTimeout(() => {
+      loadTickets(true);
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [loadTickets]);
 
   // Refresh ticket status and check-in times every five seconds.
@@ -336,8 +337,8 @@ function MyTickets() {
                 ticketStatus === "active"
                   ? "bg-emerald-950 text-emerald-300"
                   : ticketStatus === "used"
-                  ? "bg-blue-950 text-blue-300"
-                  : "bg-red-950 text-red-300";
+                    ? "bg-blue-950 text-blue-300"
+                    : "bg-red-950 text-red-300";
 
               return (
                 <article
@@ -473,5 +474,3 @@ function MyTickets() {
     </main>
   );
 }
-
-export default MyTickets;

@@ -1,5 +1,6 @@
+
 import uuid
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
@@ -30,7 +31,7 @@ def create_booking(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    # Find the selected ticket tier (row-locked on Postgres/MySQL)
+    # Find the selected ticket tier (row-locked on PostgreSQL/MySQL)
     ticket_tier = (
         db.query(TicketTier)
         .filter(TicketTier.id == booking_data.ticket_tier_id)
@@ -64,8 +65,11 @@ def create_booking(
             detail="This event is not available for booking",
         )
 
-    # Prevent booking after the event has started
-    if event.date <= datetime.utcnow():
+    # Prevent booking after the event has started.
+    # Event dates currently use naive UTC datetimes.
+    current_utc = datetime.now(timezone.utc).replace(tzinfo=None)
+
+    if event.date <= current_utc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="This event has already started",

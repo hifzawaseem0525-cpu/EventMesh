@@ -82,7 +82,6 @@ export default function Dashboard() {
   const [notice, setNotice] = useState("");
 
   const loadEvents = useCallback(async () => {
-    setLoading(true);
     setError("");
     setNotice("");
 
@@ -122,8 +121,13 @@ export default function Dashboard() {
     }
   }, []);
 
+  // Defer the initial request to avoid synchronous effect-state updates.
   useEffect(() => {
-    loadEvents();
+    const timeoutId = window.setTimeout(() => {
+      loadEvents();
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
   }, [loadEvents]);
 
   const stats = useMemo(() => {
@@ -267,7 +271,6 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950 text-white">
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-
         {/* Header */}
         <header className="mb-8 flex flex-col justify-between gap-5 sm:flex-row sm:items-center">
           <div>
@@ -284,7 +287,6 @@ export default function Dashboard() {
             </p>
           </div>
 
-          {/* Dashboard actions */}
           <div className="flex flex-wrap gap-3">
             <Link
               to="/organizer/scanner"
@@ -394,7 +396,6 @@ export default function Dashboard() {
 
         {/* Main Content */}
         <div className="grid grid-cols-1 items-start gap-8 xl:grid-cols-3">
-
           {/* Events List */}
           <section className="min-w-0 xl:col-span-2">
             <div className="mb-5 flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
@@ -488,8 +489,6 @@ export default function Dashboard() {
 
           {/* Sidebar */}
           <aside className="space-y-6">
-
-            {/* Quick Actions */}
             <section className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 shadow-xl">
               <div className="flex items-center gap-3">
                 <span className="text-2xl">⚡</span>
@@ -614,7 +613,6 @@ export default function Dashboard() {
           </div>
         </section>
 
-        {/* Footer */}
         <footer className="mt-10 border-t border-white/10 py-5 text-center text-xs text-slate-500">
           EventMesh · Organizer Dashboard
         </footer>
@@ -665,7 +663,6 @@ function EventCard({
   return (
     <article className="overflow-hidden rounded-3xl border border-white/10 bg-white/[0.04] shadow-lg transition hover:border-purple-300/20 hover:bg-white/[0.055]">
       <div className="flex flex-col sm:flex-row">
-
         {/* Event Image */}
         <div className="relative h-48 shrink-0 overflow-hidden bg-gradient-to-br from-purple-900/70 to-indigo-900/70 sm:h-auto sm:min-h-[230px] sm:w-48">
           {image ? (
@@ -778,9 +775,7 @@ function EventCard({
 
               <select
                 value={event.status || "draft"}
-                onChange={(e) =>
-                  onStatusChange(event, e.target.value)
-                }
+                onChange={(e) => onStatusChange(event, e.target.value)}
                 disabled={updating || deleting}
                 className="max-w-[145px] rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-xs font-semibold capitalize text-slate-200 outline-none transition focus:border-purple-400/50 disabled:cursor-not-allowed disabled:opacity-50"
               >

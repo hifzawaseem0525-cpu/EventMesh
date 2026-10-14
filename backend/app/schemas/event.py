@@ -1,8 +1,9 @@
+
 from datetime import datetime
 from decimal import Decimal
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 EventStatus = Literal[
@@ -28,6 +29,8 @@ class EventCreate(BaseModel):
 
 
 class EventResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     title: str
     description: str | None
@@ -38,6 +41,3 @@ class EventResponse(BaseModel):
     image: str | None
     status: EventStatus
     organizer_id: int
-
-    class Config:
-        from_attributes = True

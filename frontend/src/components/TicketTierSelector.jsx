@@ -1,4 +1,3 @@
-import Button from "./Button";
 
 function TicketTierSelector({
   name,
@@ -17,8 +16,8 @@ function TicketTierSelector({
         soldOut
           ? "border-slate-200 bg-slate-50 opacity-60"
           : isVIP
-          ? "border-purple-300 bg-purple-50 shadow-sm"
-          : "border-slate-200 bg-white hover:border-purple-200 hover:shadow-sm"
+            ? "border-purple-300 bg-purple-50 shadow-sm"
+            : "border-slate-200 bg-white hover:border-purple-200 hover:shadow-sm"
       }`}
     >
       {isVIP && !soldOut && (
@@ -34,9 +33,7 @@ function TicketTierSelector({
           </h3>
 
           <p className="mt-1 text-sm text-slate-500">
-            {soldOut
-              ? "Sold out"
-              : `${available} tickets available`}
+            {soldOut ? "Sold out" : `${available} tickets available`}
           </p>
 
           <p className="mt-3 text-xl font-extrabold text-purple-600">
@@ -49,7 +46,6 @@ function TicketTierSelector({
 
         {!soldOut && (
           <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white p-1 shadow-sm">
-            {/* MINUS BUTTON */}
             <button
               type="button"
               onClick={onDecrease}
@@ -60,7 +56,6 @@ function TicketTierSelector({
               −
             </button>
 
-            {/* QUANTITY */}
             <span
               className="min-w-[40px] text-center text-lg font-bold text-slate-900"
               aria-live="polite"
@@ -68,7 +63,6 @@ function TicketTierSelector({
               {quantity}
             </span>
 
-            {/* PLUS BUTTON */}
             <button
               type="button"
               onClick={onIncrease}
