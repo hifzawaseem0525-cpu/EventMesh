@@ -1,85 +1,47 @@
 
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import Navbar from "./components/Navbar";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import StudentDashboard from "./pages/StudentDashboard";
-import MyBookings from "./pages/MyBookings";
-import MyTickets from "./pages/MyTickets";
-import EventDetail from "./pages/EventDetail";
-import Dashboard from "./pages/Dashboard";
-import CreateEvent from "./pages/CreateEvent";
-import EditEvent from "./pages/EditEvent";
-import ManageTickets from "./pages/Managetickets";
-import OrganizerScanner from "./pages/OrganizerScanner";
+
+const Login = lazy(() => import("./pages/Login"));
+const Register = lazy(() => import("./pages/Register"));
+const StudentDashboard = lazy(() => import("./pages/StudentDashboard"));
+const MyBookings = lazy(() => import("./pages/MyBookings"));
+const MyTickets = lazy(() => import("./pages/MyTickets"));
+const EventDetail = lazy(() => import("./pages/EventDetail"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const CreateEvent = lazy(() => import("./pages/CreateEvent"));
+const EditEvent = lazy(() => import("./pages/EditEvent"));
+const ManageTickets = lazy(() => import("./pages/Managetickets"));
+const OrganizerScanner = lazy(() => import("./pages/OrganizerScanner"));
 
 function App() {
   return (
     <BrowserRouter>
       <Navbar />
 
-      <Routes>
-        {/* Login */}
-        <Route path="/" element={<Login />} />
-
-        {/* Registration */}
-        <Route path="/register" element={<Register />} />
-
-        {/* Student Dashboard */}
-        <Route
-          path="/student-dashboard"
-          element={<StudentDashboard />}
-        />
-
-        {/* My Bookings */}
-        <Route
-          path="/my-bookings"
-          element={<MyBookings />}
-        />
-
-        {/* My Tickets */}
-        <Route
-          path="/my-tickets"
-          element={<MyTickets />}
-        />
-
-        {/* Event Details */}
-        <Route
-          path="/event/:id"
-          element={<EventDetail />}
-        />
-
-        {/* Organizer Dashboard */}
-        <Route
-          path="/dashboard"
-          element={<Dashboard />}
-        />
-
-        {/* Organizer QR Scanner */}
-        <Route
-          path="/organizer/scanner"
-          element={<OrganizerScanner />}
-        />
-
-        {/* Create Event */}
-        <Route
-          path="/create-event"
-          element={<CreateEvent />}
-        />
-
-        {/* Edit Event */}
-        <Route
-          path="/edit-event/:id"
-          element={<EditEvent />}
-        />
-
-        {/* Manage Ticket Tiers */}
-        <Route
-          path="/manage-tickets/:eventId"
-          element={<ManageTickets />}
-        />
-      </Routes>
+      <Suspense
+        fallback={
+          <div role="status" style={{ padding: "24px", textAlign: "center" }}>
+            Loading page...
+          </div>
+        }
+      >
+        <Routes>
+          <Route path="/" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/student-dashboard" element={<StudentDashboard />} />
+          <Route path="/my-bookings" element={<MyBookings />} />
+          <Route path="/my-tickets" element={<MyTickets />} />
+          <Route path="/event/:id" element={<EventDetail />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/organizer/scanner" element={<OrganizerScanner />} />
+          <Route path="/create-event" element={<CreateEvent />} />
+          <Route path="/edit-event/:id" element={<EditEvent />} />
+          <Route path="/manage-tickets/:eventId" element={<ManageTickets />} />
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }
