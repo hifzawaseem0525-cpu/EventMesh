@@ -293,3 +293,82 @@ EventMesh/
 ├── package.json
 ├── vite.config.js
 └── README.md
+---
+
+## Week 5: Testing, Debugging, and Optimization
+
+### 1. Objective
+
+The objective of Week 5 was to improve EventMesh's reliability and code quality through automated testing, debugging, and production-build verification.
+
+### 2. Testing Strategy
+
+#### Backend Testing
+
+The backend uses **Pytest** to test API behavior and validation.
+
+Test coverage includes:
+- User registration and authentication.
+- Rejection of duplicate registrations and invalid passwords.
+- Authentication requirements for protected endpoints.
+- Ticket booking and ticket quantity updates.
+- Booking validation for insufficient stock and invalid requests.
+- Public event listing and role-based event creation.
+- Ticket-tier creation, price validation, quantity validation, and organizer permissions.
+
+#### Frontend Testing
+
+The frontend uses **Vitest** to run automated component tests.
+
+Test files include:
+- `Button.test.jsx`
+- `EventCard.test.jsx`
+- `StatCard.test.jsx`
+
+These tests verify selected component behavior and rendering. They complement manual testing of the complete application workflows.
+
+### 3. How to Run the Tests
+
+Run the backend tests from the `backend` directory with the virtual environment activated:
+
+```powershell
+python -m pytest tests -v
+```
+
+Run the frontend checks from the `frontend` directory:
+
+```powershell
+npm.cmd test
+npm.cmd run lint
+npm.cmd run build
+```
+
+### 4. Test Results
+
+Results recorded during Week 5 verification:
+
+| Check | Result |
+|---|---|
+| Backend automated tests | 25 passed |
+| Frontend automated tests | 19 passed |
+| Frontend lint | Passed |
+| Frontend production build | Passed |
+| Manual application flow | Reported working correctly |
+
+The backend test run displayed two dependency deprecation warnings. The production build also displayed a warning that the generated JavaScript bundle exceeded 500 kB. These warnings did not cause the tests or build to fail.
+
+### 5. Debugging Process
+
+During frontend verification, lint issues involving effect execution and a duplicate default export were addressed. The updated frontend was then checked using the lint command, automated tests, and production build.
+
+Backend API tests were used to verify authentication, booking behavior, validation rules, and role-based permissions.
+
+### 6. Performance Verification and Optimization
+
+The production build was used to verify that the frontend could be compiled for deployment.
+
+The build reported a JavaScript bundle larger than 500 kB. This identifies a potential optimization opportunity, such as code splitting or lazy loading. The warning should be investigated before claiming that bundle-size optimization has been completed.
+
+### 7. Conclusion
+
+Week 5 verification recorded 25 passing backend tests and 19 passing frontend tests. The frontend lint and production build succeeded, and the main application flow was manually checked. Further performance optimization and documentation review should be completed where required by the assignment.
