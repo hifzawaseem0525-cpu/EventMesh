@@ -1,4 +1,3 @@
-@'
 # Python
 __pycache__/
 *.py[cod]
@@ -28,11 +27,11 @@ pnpm-debug.log*
 .idea/
 .DS_Store
 
-# Do not push ZIP files
+# ZIP and local submission folders
 *.zip
-
-# Keep local submission folders out of GitHub
 EventMesh_Internship_Submission/
 EventMesh_Submission/
 ZIP_Check/
-'@ | Set-Content -Path .gitignore
+
+# TiDB CA certificate
+backend/certs/
